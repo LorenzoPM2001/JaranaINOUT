@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('api', {
   addEmployee: (employee) => ipcRenderer.invoke('add-employee', employee),
   editEmployee: (id, updates) => ipcRenderer.invoke('edit-employee', { id, updates }),
   deleteEmployee: (id) => ipcRenderer.invoke('delete-employee', id),
+  restoreEmployee: (id) => ipcRenderer.invoke('restore-employee', id),
+  permanentlyDeleteEmployee: (id) => ipcRenderer.invoke('permanently-delete-employee', id),
 
   // Clock in/out
   clockIn: (employeeId) => ipcRenderer.invoke('clock-in', employeeId),

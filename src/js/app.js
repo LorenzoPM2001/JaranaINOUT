@@ -211,6 +211,23 @@
     clockinStatus.className = `clockin-status ${result.status}`;
     clockinStatus.textContent = result.status === 'in' ? '● Fichado actualmente' : '○ Sin fichar';
 
+    // Enable/disable buttons based on status
+    if (result.status === 'in') {
+      btnClockin.disabled = true;
+      btnClockin.style.opacity = '0.3';
+      btnClockin.style.pointerEvents = 'none';
+      btnClockout.disabled = false;
+      btnClockout.style.opacity = '1';
+      btnClockout.style.pointerEvents = 'auto';
+    } else {
+      btnClockin.disabled = false;
+      btnClockin.style.opacity = '1';
+      btnClockin.style.pointerEvents = 'auto';
+      btnClockout.disabled = true;
+      btnClockout.style.opacity = '0.3';
+      btnClockout.style.pointerEvents = 'none';
+    }
+
     // Update today records
     todayRecords.innerHTML = '';
     if (result.records.length === 0) {
@@ -239,6 +256,12 @@
     if (!selectedEmployee) return;
 
     const record = await window.api.clockIn(selectedEmployee.id);
+
+    if (record.error) {
+      showToast(record.error, 'error');
+      return;
+    }
+
     const time = new Date(record.timestamp).toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit'
@@ -261,6 +284,12 @@
     if (!selectedEmployee) return;
 
     const record = await window.api.clockOut(selectedEmployee.id);
+
+    if (record.error) {
+      showToast(record.error, 'error');
+      return;
+    }
+
     const time = new Date(record.timestamp).toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit'
@@ -377,7 +406,15 @@
             <span class="admin-emp-name">${emp.name} ${emp.lastName}</span>
             <span class="admin-emp-dni">Baja: ${archivedDate} · ${emp.dni || 'Sin DNI'}</span>
           </div>
+          <div class="admin-emp-actions">
+            <button class="btn-restore" data-id="${emp.id}">🔄 Dar de alta</button>
+            <button class="btn-delete" data-id="${emp.id}">🗑️ Eliminar</button>
+          </div>
         `;
+
+        row.querySelector('.btn-restore').addEventListener('click', () => restoreEmployee(emp));
+        row.querySelector('.btn-delete').addEventListener('click', () => permanentlyDeleteEmployee(emp));
+
         adminEmployeesList.appendChild(row);
       });
     }
@@ -418,6 +455,34 @@
     exportYear.value = now.getFullYear();
     exportAllMonth.value = now.getMonth();
     exportAllYear.value = now.getFullYear();
+  }
+
+  // Restore archived employee
+  async function restoreEmployee(emp) {
+    const confirmed = await showConfirm(
+      'Dar de alta',
+      `¿Quieres volver a dar de alta a ${emp.name} ${emp.lastName}? Se conservarán todos sus registros anteriores.`
+    );
+
+    if (confirmed) {
+      await window.api.restoreEmployee(emp.id);
+      showToast(`${emp.name} ${emp.lastName} dado de alta de nuevo`, 'success');
+      await loadAdminEmployees();
+    }
+  }
+
+  // Permanently delete archived employee
+  async function permanentlyDeleteEmployee(emp) {
+    const confirmed = await showConfirm(
+      'Eliminar permanentemente',
+      `¿Seguro que quieres eliminar PERMANENTEMENTE a ${emp.name} ${emp.lastName}? Se borrarán todos sus registros de horas. Esta acción NO se puede deshacer.`
+    );
+
+    if (confirmed) {
+      await window.api.permanentlyDeleteEmployee(emp.id);
+      showToast(`${emp.name} ${emp.lastName} eliminado permanentemente`, 'success');
+      await loadAdminEmployees();
+    }
   }
 
   // Add Employee

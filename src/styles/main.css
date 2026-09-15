@@ -855,6 +855,25 @@ body {
   background: rgba(214, 48, 49, 0.1);
 }
 
+.btn-restore {
+  padding: 6px 12px;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-restore:hover {
+  border-color: var(--color-entry);
+  color: var(--color-entry);
+  background: var(--color-entry-bg);
+}
+
 /* ===== FORMS ===== */
 .form-group {
   display: flex;
