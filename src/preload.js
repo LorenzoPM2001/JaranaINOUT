@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('api', {
   // Clock in/out
   clockIn: (employeeId) => ipcRenderer.invoke('clock-in', employeeId),
   clockOut: (employeeId) => ipcRenderer.invoke('clock-out', employeeId),
+  cancelLastEntry: (employeeId) => ipcRenderer.invoke('cancel-last-entry', employeeId),
 
   // Records & Status
   getRecords: (employeeId, month, year) => ipcRenderer.invoke('get-records', { employeeId, month, year }),

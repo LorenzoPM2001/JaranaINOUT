@@ -285,6 +285,20 @@
 
     const record = await window.api.clockOut(selectedEmployee.id);
 
+    if (record.confirmCancel) {
+      const confirmed = await showConfirm('Anular fichaje', record.message);
+      if (confirmed) {
+        const cancelResult = await window.api.cancelLastEntry(selectedEmployee.id);
+        if (cancelResult.success) {
+          showToast('Fichaje de entrada anulado', 'success');
+          await updateClockInStatus();
+        } else {
+          showToast(cancelResult.error || 'Error al anular', 'error');
+        }
+      }
+      return;
+    }
+
     if (record.error) {
       showToast(record.error, 'error');
       return;
@@ -351,6 +365,21 @@
   btnLogout.addEventListener('click', () => {
     showView('main');
     loadEmployees();
+  });
+
+  // === Admin: Tabs Logic ===
+  const adminNavItems = document.querySelectorAll('.admin-nav-item');
+  const adminTabs = document.querySelectorAll('.admin-tab');
+
+  adminNavItems.forEach(item => {
+    item.addEventListener('click', () => {
+      adminNavItems.forEach(nav => nav.classList.remove('active'));
+      adminTabs.forEach(tab => tab.classList.add('hidden'));
+
+      item.classList.add('active');
+      const targetId = item.getAttribute('data-target');
+      document.getElementById(targetId).classList.remove('hidden');
+    });
   });
 
   // === Admin: Employee Management ===

@@ -16,7 +16,7 @@
       <div class="header-left">
         <div class="logo">
           <span class="logo-icon">⏱</span>
-          <h1><span class="logo-accent">INOUT</span></h1>
+          <h1>Jarana <span class="logo-accent">INOUT</span></h1>
         </div>
         <div id="main-clock" class="header-clock"></div>
       </div>
@@ -137,126 +137,150 @@
         </button>
       </header>
 
-      <div class="admin-content">
-        <!-- Employees Section -->
-        <section class="admin-section">
-          <div class="section-header">
-            <h3>👥 Gestión de Empleados</h3>
-            <button id="btn-add-employee" class="btn-add">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              Añadir Empleado
-            </button>
-          </div>
-          <div id="admin-employees-list" class="admin-employees-list"></div>
-        </section>
+      <div class="admin-body">
+        <aside class="admin-sidebar">
+          <ul class="admin-nav">
+            <li class="admin-nav-item active" data-target="tab-employees">
+              <span class="nav-icon">👥</span> Empleados
+            </li>
+            <li class="admin-nav-item" data-target="tab-exports">
+              <span class="nav-icon">📊</span> Exportaciones
+            </li>
+            <li class="admin-nav-item" data-target="tab-settings">
+              <span class="nav-icon">⚙️</span> Ajustes
+            </li>
+          </ul>
+        </aside>
 
-        <!-- Export Section -->
-        <section class="admin-section">
-          <div class="section-header">
-            <h3>📊 Exportar Horas</h3>
+        <div class="admin-content">
+          <!-- EMPLOYEES TAB -->
+          <div id="tab-employees" class="admin-tab active">
+            <section class="admin-section">
+              <div class="section-header">
+                <h3>Gestión de Empleados</h3>
+                <button id="btn-add-employee" class="btn-add">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Añadir Empleado
+                </button>
+              </div>
+              <div id="admin-employees-list" class="admin-employees-list"></div>
+            </section>
           </div>
-          <div class="export-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="export-employee">Empleado</label>
-                <select id="export-employee"></select>
-              </div>
-              <div class="form-group">
-                <label for="export-month">Mes</label>
-                <select id="export-month">
-                  <option value="0">Enero</option>
-                  <option value="1">Febrero</option>
-                  <option value="2">Marzo</option>
-                  <option value="3">Abril</option>
-                  <option value="4">Mayo</option>
-                  <option value="5">Junio</option>
-                  <option value="6">Julio</option>
-                  <option value="7">Agosto</option>
-                  <option value="8">Septiembre</option>
-                  <option value="9">Octubre</option>
-                  <option value="10">Noviembre</option>
-                  <option value="11">Diciembre</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="export-year">Año</label>
-                <input type="number" id="export-year" min="2020" max="2099">
-              </div>
-            </div>
-            <button id="btn-export" class="btn-export">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              Descargar Excel
-            </button>
-          </div>
-        </section>
 
-        <!-- Export ALL Section -->
-        <section class="admin-section">
-          <div class="section-header">
-            <h3>📋 Exportar Horas de Todos los Empleados</h3>
-          </div>
-          <div class="export-form">
-            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 12px;">Genera un Excel con una pestaña por cada empleado. Los días sin registros quedarán vacíos.</p>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="export-all-month">Mes</label>
-                <select id="export-all-month">
-                  <option value="0">Enero</option>
-                  <option value="1">Febrero</option>
-                  <option value="2">Marzo</option>
-                  <option value="3">Abril</option>
-                  <option value="4">Mayo</option>
-                  <option value="5">Junio</option>
-                  <option value="6">Julio</option>
-                  <option value="7">Agosto</option>
-                  <option value="8">Septiembre</option>
-                  <option value="9">Octubre</option>
-                  <option value="10">Noviembre</option>
-                  <option value="11">Diciembre</option>
-                </select>
+          <!-- EXPORTS TAB -->
+          <div id="tab-exports" class="admin-tab hidden">
+            <!-- Export Section -->
+            <section class="admin-section">
+              <div class="section-header">
+                <h3>Exportar Horas de un Empleado</h3>
               </div>
-              <div class="form-group">
-                <label for="export-all-year">Año</label>
-                <input type="number" id="export-all-year" min="2020" max="2099">
+              <div class="export-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="export-employee">Empleado</label>
+                    <select id="export-employee"></select>
+                  </div>
+                  <div class="form-group">
+                    <label for="export-month">Mes</label>
+                    <select id="export-month">
+                      <option value="0">Enero</option>
+                      <option value="1">Febrero</option>
+                      <option value="2">Marzo</option>
+                      <option value="3">Abril</option>
+                      <option value="4">Mayo</option>
+                      <option value="5">Junio</option>
+                      <option value="6">Julio</option>
+                      <option value="7">Agosto</option>
+                      <option value="8">Septiembre</option>
+                      <option value="9">Octubre</option>
+                      <option value="10">Noviembre</option>
+                      <option value="11">Diciembre</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="export-year">Año</label>
+                    <input type="number" id="export-year" min="2020" max="2099">
+                  </div>
+                </div>
+                <button id="btn-export" class="btn-export">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Descargar Excel
+                </button>
               </div>
-            </div>
-            <button id="btn-export-all" class="btn-export" style="background: linear-gradient(135deg, #6C5CE7, #A29BFE);">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              Descargar Excel de Todos
-            </button>
-          </div>
-        </section>
+            </section>
 
-        <!-- Change Admin Credentials -->
-        <section class="admin-section">
-          <div class="section-header">
-            <h3>🔑 Cambiar Credenciales</h3>
-          </div>
-          <div class="credentials-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="new-admin-user">Nuevo Usuario</label>
-                <input type="text" id="new-admin-user" placeholder="admin" autocomplete="off">
+            <!-- Export ALL Section -->
+            <section class="admin-section">
+              <div class="section-header">
+                <h3>Exportar Horas de Todos los Empleados</h3>
               </div>
-              <div class="form-group">
-                <label for="new-admin-pass">Nueva Contraseña</label>
-                <input type="password" id="new-admin-pass" placeholder="••••••">
+              <div class="export-form">
+                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 12px;">Genera un Excel con una pestaña por cada empleado. Los días sin registros quedarán vacíos.</p>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="export-all-month">Mes</label>
+                    <select id="export-all-month">
+                      <option value="0">Enero</option>
+                      <option value="1">Febrero</option>
+                      <option value="2">Marzo</option>
+                      <option value="3">Abril</option>
+                      <option value="4">Mayo</option>
+                      <option value="5">Junio</option>
+                      <option value="6">Julio</option>
+                      <option value="7">Agosto</option>
+                      <option value="8">Septiembre</option>
+                      <option value="9">Octubre</option>
+                      <option value="10">Noviembre</option>
+                      <option value="11">Diciembre</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="export-all-year">Año</label>
+                    <input type="number" id="export-all-year" min="2020" max="2099">
+                  </div>
+                </div>
+                <button id="btn-export-all" class="btn-export" style="background: linear-gradient(135deg, #6C5CE7, #A29BFE);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Descargar Excel de Todos
+                </button>
               </div>
-            </div>
-            <button id="btn-change-creds" class="btn-secondary">Guardar Credenciales</button>
+            </section>
           </div>
-        </section>
+
+          <!-- SETTINGS TAB -->
+          <div id="tab-settings" class="admin-tab hidden">
+            <!-- Change Admin Credentials -->
+            <section class="admin-section">
+              <div class="section-header">
+                <h3>Cambiar Credenciales</h3>
+              </div>
+              <div class="credentials-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="new-admin-user">Nuevo Usuario</label>
+                    <input type="text" id="new-admin-user" placeholder="admin" autocomplete="off">
+                  </div>
+                  <div class="form-group">
+                    <label for="new-admin-pass">Nueva Contraseña</label>
+                    <input type="password" id="new-admin-pass" placeholder="••••••">
+                  </div>
+                </div>
+                <button id="btn-change-creds" class="btn-secondary">Guardar Credenciales</button>
+              </div>
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   </div>

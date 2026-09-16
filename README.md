@@ -1,0 +1,54 @@
+# ⏱ Jarana INOUT - Sistema de Control Horario
+
+¡Bienvenido a **Jarana INOUT**! La solución definitiva, rápida y 100% privada para el registro de jornada laboral en pequeñas y medianas empresas.
+
+Pensado para colocarse en un terminal a la entrada del establecimiento, Jarana INOUT elimina la fricción de los fichajes diarios con una interfaz moderna y táctil, al tiempo que facilita enormemente la labor de recursos humanos gracias a su generación automática de reportes en Excel.
+
+---
+
+## 🌟 Características Principales
+
+* 🔒 **100% Privado y Offline:** Todos los datos se guardan en el ordenador local de la empresa. Sin nubes, sin suscripciones, sin riesgos de fuga de datos por internet.
+* 🧠 **Redondeo Inteligente:** Se acabó calcular los minutos exactos. Las entradas se redondean siempre hacia arriba al múltiplo de 5 (ej: 08:02 -> 08:05) y las salidas hacia abajo, favoreciendo un cálculo de horas limpio para los trabajadores.
+* 🛡️ **Prevención de Errores Humanos:** Si un empleado ficha salida por error nada más entrar, el sistema detecta márgenes menores a 10 minutos y ofrece la anulación automática del fichaje.
+* 📊 **Exportación Profesional a Excel:** Con un solo clic, descarga los reportes de un empleado específico o genera un informe masivo con todos los empleados separados por pestañas.
+* 👥 **Gestión Histórica (Altas y Bajas):** Mantén tu panel principal limpio dando de baja a exempleados, pero conservando todo su historial legal intacto en el sistema.
+
+---
+
+## 📸 Interfaz y Uso
+
+### 1. Pantalla Principal (El Kiosco)
+La pantalla principal está diseñada para ser utilizada por los empleados en su día a día. Simplemente ven su nombre, pulsan sobre su tarjeta y eligen si entran o salen.
+
+![Pantalla Principal](assets/screenshot-main.jpg)
+
+### 2. Panel de Fichaje
+Al seleccionar un empleado, la pantalla cambia a un diseño limpio con dos grandes botones (Entrada y Salida), ideales para pantallas táctiles. Además, muestra el historial de movimientos del empleado en el día actual para evitar dudas.
+
+![Pantalla de Fichaje](assets/screenshot-clockin.jpg)
+
+### 3. Panel de Administración
+El corazón del sistema para los responsables de RRHH. Protegido por usuario y contraseña, se divide en un menú lateral muy intuitivo:
+- **Gestión de Empleados:** Añade, edita, da de baja o restaura trabajadores.
+- **Exportaciones:** Genera los archivos Excel legales necesarios para inspecciones de trabajo.
+- **Ajustes:** Modifica las credenciales de acceso.
+
+![Panel de Administración](assets/screenshot-admin.jpg)
+
+---
+
+## 🚀 Instalación para el Cliente
+
+1. Descomprime y abre la carpeta del programa.
+2. Ejecuta el acceso directo de **Jarana INOUT**.
+3. ¡Listo! El programa se iniciará en pantalla completa listo para ser usado.
+
+*Para desarrolladores:*
+```bash
+npm install
+npm start
+```
+
+---
+*Jarana INOUT - Control horario sin complicaciones.*

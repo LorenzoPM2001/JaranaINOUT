@@ -1,6 +1,6 @@
 {
   "name": "jarana-inout",
-  "version": "1.2.1",
+  "version": "1.2.6",
   "description": "Aplicación de control de entrada y salida de empleados",
   "main": "src/main.js",
   "scripts": {

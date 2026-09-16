@@ -183,10 +183,15 @@ app.whenReady().then(() => {
       return { error: 'Ya tienes una entrada registrada. Registra la salida primero.' };
     }
 
+    const now = new Date();
+    const exactMinutes = now.getMinutes() + (now.getSeconds() / 60);
+    const roundedMinutes = Math.ceil(exactMinutes / 5) * 5;
+    now.setMinutes(roundedMinutes, 0, 0);
+
     const record = {
       employeeId,
       type: 'in',
-      timestamp: new Date().toISOString()
+      timestamp: now.toISOString()
     };
     data.records.push(record);
     saveData(data);
@@ -206,14 +211,49 @@ app.whenReady().then(() => {
       return { error: 'No tienes una entrada registrada. Registra la entrada primero.' };
     }
 
+    // Require at least 10 minutes (600,000 ms) between the recorded entry and current time
+    const exactCurrentTime = new Date();
+    const entryTime = new Date(lastRecord.timestamp);
+    if (exactCurrentTime.getTime() - entryTime.getTime() < 600000) {
+      return { 
+        confirmCancel: true, 
+        message: 'Han pasado menos de 10 minutos desde tu entrada. ¿Quieres anular el fichaje de entrada?'
+      };
+    }
+
+    const now = new Date();
+    const exactMinutes = now.getMinutes() + (now.getSeconds() / 60);
+    const roundedMinutes = Math.floor(exactMinutes / 5) * 5;
+    now.setMinutes(roundedMinutes, 0, 0);
+
     const record = {
       employeeId,
       type: 'out',
-      timestamp: new Date().toISOString()
+      timestamp: now.toISOString()
     };
     data.records.push(record);
     saveData(data);
     return record;
+  });
+
+  // Cancel last entry
+  ipcMain.handle('cancel-last-entry', (event, employeeId) => {
+    const data = loadData();
+    // Find the index of the last record for this employee
+    let lastRecordIndex = -1;
+    for (let i = data.records.length - 1; i >= 0; i--) {
+      if (data.records[i].employeeId === employeeId) {
+        lastRecordIndex = i;
+        break;
+      }
+    }
+    
+    if (lastRecordIndex !== -1 && data.records[lastRecordIndex].type === 'in') {
+      data.records.splice(lastRecordIndex, 1);
+      saveData(data);
+      return { success: true };
+    }
+    return { error: 'No se pudo anular la entrada.' };
   });
 
   // Get records for an employee

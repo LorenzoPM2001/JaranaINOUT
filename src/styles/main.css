@@ -721,13 +721,70 @@ body {
   color: var(--color-danger);
 }
 
+.admin-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.admin-sidebar {
+  width: 250px;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-glass);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: 1px solid transparent;
+}
+
+.admin-nav-item:hover {
+  background: var(--bg-glass-strong);
+  color: var(--text-primary);
+}
+
+.admin-nav-item.active {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.2), transparent);
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  color: var(--accent-primary);
+}
+
+.nav-icon {
+  font-size: 18px;
+}
+
 .admin-content {
   flex: 1;
-  padding: 24px 32px;
+  padding: 32px;
   overflow-y: auto;
+}
+
+.admin-tab {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  animation: fadeIn 0.3s ease;
 }
 
 .admin-section {
