@@ -20,7 +20,8 @@ function getDefaultData() {
     },
     employees: [],
     archivedEmployees: [],
-    records: []
+    records: [],
+    requests: []
   };
 }
 
@@ -33,6 +34,10 @@ function loadData() {
       // Backward compatibility: ensure archivedEmployees exists
       if (!data.archivedEmployees) {
         data.archivedEmployees = [];
+      }
+      // Backward compatibility: ensure requests exists
+      if (!data.requests) {
+        data.requests = [];
       }
       return data;
     }
@@ -180,7 +185,21 @@ app.whenReady().then(() => {
 
     const lastRecord = empRecords[empRecords.length - 1];
     if (lastRecord && lastRecord.type === 'in') {
-      return { error: 'Ya tienes una entrada registrada. Registra la salida primero.' };
+      // Check if there is an active pending request for this employee
+      const hasPendingRequest = (data.requests || []).some(
+        r => r.employeeId === employeeId && r.status === 'pending'
+      );
+      if (!hasPendingRequest) {
+        const elapsedMs = Date.now() - new Date(lastRecord.timestamp).getTime();
+        if (elapsedMs >= 8 * 60 * 60 * 1000) {
+          return {
+            error: 'forgotten_exit',
+            message: 'Debes indicar la hora de salida de tu turno anterior.',
+            lastEntry: lastRecord
+          };
+        }
+        return { error: 'Ya tienes una entrada registrada. Registra la salida primero.' };
+      }
     }
 
     const now = new Date();
@@ -211,10 +230,21 @@ app.whenReady().then(() => {
       return { error: 'No tienes una entrada registrada. Registra la entrada primero.' };
     }
 
-    // Require at least 10 minutes (600,000 ms) between the recorded entry and current time
+    // Check if more than 8 hours have passed: if so, trigger forgotten exit prompt
     const exactCurrentTime = new Date();
     const entryTime = new Date(lastRecord.timestamp);
-    if (exactCurrentTime.getTime() - entryTime.getTime() < 600000) {
+    const elapsedMs = exactCurrentTime.getTime() - entryTime.getTime();
+
+    if (elapsedMs >= 8 * 60 * 60 * 1000) {
+      return {
+        forgottenExit: true,
+        message: 'Han pasado más de 8 horas desde tu entrada. Por favor, indica a qué hora finalizó tu turno.',
+        lastEntry: lastRecord
+      };
+    }
+
+    // Require at least 10 minutes (600,000 ms) between the recorded entry and current time
+    if (elapsedMs < 600000) {
       return { 
         confirmCancel: true, 
         message: 'Han pasado menos de 10 minutos desde tu entrada. ¿Quieres anular el fichaje de entrada?'
@@ -276,19 +306,49 @@ app.whenReady().then(() => {
       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     const lastRecord = allEmpRecords[allEmpRecords.length - 1];
-    const status = (lastRecord && lastRecord.type === 'in') ? 'in' : 'out';
+    let status = (lastRecord && lastRecord.type === 'in') ? 'in' : 'out';
+
+    // Check if there is an active pending request for this employee
+    const pendingRequest = (data.requests || []).find(
+      r => r.employeeId === employeeId && r.status === 'pending'
+    );
+
+    let isForgotten = false;
+    let lastEntry = null;
+
+    if (status === 'in') {
+      if (pendingRequest) {
+        // Since there is a pending request resolving the previous entry,
+        // the employee is unlocked and free to clock IN for a new shift!
+        status = 'out';
+      } else {
+        const elapsedMs = Date.now() - new Date(lastRecord.timestamp).getTime();
+        if (elapsedMs >= 8 * 60 * 60 * 1000) {
+          isForgotten = true;
+          status = 'forgotten_exit';
+          lastEntry = lastRecord;
+        }
+      }
+    }
 
     // For display: show today's records + pending entry from yesterday if still open
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     let displayRecords = allEmpRecords.filter(r => r.timestamp.startsWith(todayStr));
 
-    // If status is 'in' and the entry was yesterday, include it in the display
-    if (status === 'in' && lastRecord && !lastRecord.timestamp.startsWith(todayStr)) {
+    // If status is 'in' or forgotten and the entry was yesterday, include it in display
+    if ((status === 'in' || isForgotten) && lastRecord && !lastRecord.timestamp.startsWith(todayStr)) {
       displayRecords = [lastRecord, ...displayRecords];
     }
 
-    return { status, records: displayRecords };
+    return { 
+      status, 
+      isForgotten, 
+      lastEntry, 
+      hasPendingRequest: !!pendingRequest,
+      pendingRequest,
+      records: displayRecords 
+    };
   });
 
   // Get all employees status
@@ -302,7 +362,23 @@ app.whenReady().then(() => {
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
       const lastRecord = empRecords[empRecords.length - 1];
-      statuses[emp.id] = (lastRecord && lastRecord.type === 'in') ? 'in' : 'out';
+      let status = (lastRecord && lastRecord.type === 'in') ? 'in' : 'out';
+
+      if (status === 'in') {
+        const hasPendingRequest = (data.requests || []).some(
+          r => r.employeeId === emp.id && r.status === 'pending'
+        );
+        if (hasPendingRequest) {
+          status = 'out';
+        } else {
+          const elapsedMs = Date.now() - new Date(lastRecord.timestamp).getTime();
+          if (elapsedMs >= 8 * 60 * 60 * 1000) {
+            status = 'forgotten_exit';
+          }
+        }
+      }
+
+      statuses[emp.id] = status;
     });
     return statuses;
   });
@@ -321,6 +397,102 @@ app.whenReady().then(() => {
     const data = loadData();
     data.admin.username = username;
     data.admin.password = password;
+    saveData(data);
+    return { success: true };
+  });
+
+  // === Requests (Peticiones de Olvido de Salida) ===
+
+  // Submit an exit request from the employee
+  ipcMain.handle('submit-exit-request', (event, { employeeId, entryTimestamp, requestedExitTimestamp, shiftDay, notes }) => {
+    const data = loadData();
+    data.requests = data.requests || [];
+
+    const employee = data.employees.find(e => e.id === employeeId);
+    if (!employee) return { error: 'Empleado no encontrado' };
+
+    // Apply exit rounding: floor to 5 minutes
+    const exitDate = new Date(requestedExitTimestamp);
+    const exactMinutes = exitDate.getMinutes() + (exitDate.getSeconds() / 60);
+    const roundedMinutes = Math.floor(exactMinutes / 5) * 5;
+    exitDate.setMinutes(roundedMinutes, 0, 0);
+
+    const newRequest = {
+      id: 'req-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 6),
+      employeeId,
+      employeeName: `${employee.name} ${employee.lastName}`,
+      entryTimestamp,
+      requestedExitTimestamp: exitDate.toISOString(),
+      shiftDay: shiftDay || 'same_day',
+      notes: notes || '',
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+
+    data.requests.push(newRequest);
+    saveData(data);
+    return { success: true, request: newRequest };
+  });
+
+  // Get all requests
+  ipcMain.handle('get-requests', () => {
+    const data = loadData();
+    data.requests = data.requests || [];
+    const sorted = [...data.requests].sort((a, b) => {
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (a.status !== 'pending' && b.status === 'pending') return 1;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+    return sorted;
+  });
+
+  // Get count of pending requests
+  ipcMain.handle('get-pending-requests-count', () => {
+    const data = loadData();
+    data.requests = data.requests || [];
+    return data.requests.filter(r => r.status === 'pending').length;
+  });
+
+  // Approve request
+  ipcMain.handle('approve-request', (event, { requestId, customExitTimestamp }) => {
+    const data = loadData();
+    data.requests = data.requests || [];
+    const req = data.requests.find(r => r.id === requestId);
+    if (!req) return { error: 'Petición no encontrada' };
+
+    const targetExitTime = customExitTimestamp ? new Date(customExitTimestamp) : new Date(req.requestedExitTimestamp);
+    const exactMinutes = targetExitTime.getMinutes() + (targetExitTime.getSeconds() / 60);
+    const roundedMinutes = Math.floor(exactMinutes / 5) * 5;
+    targetExitTime.setMinutes(roundedMinutes, 0, 0);
+
+    // Insert official out record
+    const record = {
+      employeeId: req.employeeId,
+      type: 'out',
+      timestamp: targetExitTime.toISOString(),
+      origin: 'request_approved',
+      requestId: req.id
+    };
+    data.records.push(record);
+    data.records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    req.status = 'approved';
+    req.approvedAt = new Date().toISOString();
+    req.finalExitTimestamp = targetExitTime.toISOString();
+    saveData(data);
+    return { success: true, record };
+  });
+
+  // Reject request
+  ipcMain.handle('reject-request', (event, { requestId, reason }) => {
+    const data = loadData();
+    data.requests = data.requests || [];
+    const req = data.requests.find(r => r.id === requestId);
+    if (!req) return { error: 'Petición no encontrada' };
+
+    req.status = 'rejected';
+    req.rejectedAt = new Date().toISOString();
+    req.rejectReason = reason || '';
     saveData(data);
     return { success: true };
   });

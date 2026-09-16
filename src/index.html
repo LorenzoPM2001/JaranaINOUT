@@ -26,6 +26,7 @@
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
         <span>Admin</span>
+        <span id="admin-badge" class="badge-dot hidden"></span>
       </button>
     </header>
 
@@ -143,6 +144,9 @@
             <li class="admin-nav-item active" data-target="tab-employees">
               <span class="nav-icon">👥</span> Empleados
             </li>
+            <li class="admin-nav-item" data-target="tab-requests" id="nav-item-requests">
+              <span class="nav-icon">📩</span> Peticiones <span id="requests-badge" class="badge-count hidden">0</span>
+            </li>
             <li class="admin-nav-item" data-target="tab-exports">
               <span class="nav-icon">📊</span> Exportaciones
             </li>
@@ -167,6 +171,22 @@
                 </button>
               </div>
               <div id="admin-employees-list" class="admin-employees-list"></div>
+            </section>
+          </div>
+
+          <!-- REQUESTS TAB -->
+          <div id="tab-requests" class="admin-tab hidden">
+            <section class="admin-section">
+              <div class="section-header">
+                <h3>Peticiones de Olvido de Salida</h3>
+                <span id="requests-pending-indicator" class="badge-pill">0 pendientes</span>
+              </div>
+              <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">
+                Solicitudes enviadas por empleados que olvidaron fichar la salida tras superar 8 horas de jornada. Revisa y confirma o ajusta la hora para registrarla formalmente.
+              </p>
+              <div id="admin-requests-list" class="requests-list">
+                <!-- Se cargan dinámicamente -->
+              </div>
             </section>
           </div>
 
@@ -311,6 +331,94 @@
           <button type="submit" class="btn-primary">Guardar</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL - Olvido de Salida (Empleado) ===== -->
+  <div id="modal-forgotten-exit" class="modal-overlay hidden">
+    <div class="modal modal-forgotten">
+      <div class="modal-header">
+        <h3>⚠️ Olvido de Fichaje de Salida</h3>
+        <button id="btn-forgotten-close" class="btn-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="forgotten-alert-box">
+          <span class="alert-icon">⏱</span>
+          <div>
+            <p>Tu última entrada registrada fue el <strong id="forgotten-entry-date">--/--</strong> a las <strong id="forgotten-entry-time">--:--</strong>.</p>
+            <p class="alert-sub">Han transcurrido más de 8 horas sin registrar salida.</p>
+          </div>
+        </div>
+
+        <p class="forgotten-heading">¿A qué hora te fuiste?</p>
+
+        <div class="form-group">
+          <label class="form-label">¿Cuándo finalizó tu turno?</label>
+          <div class="shift-day-selector">
+            <label class="radio-card active" id="label-shift-same">
+              <input type="radio" name="shift-day" id="shift-day-same" value="same_day" checked>
+              <div class="radio-card-content">
+                <span class="radio-title" id="shift-same-day-title">El mismo día del turno</span>
+                <span class="radio-sub" id="shift-same-day-date">--/--</span>
+              </div>
+            </label>
+            <label class="radio-card" id="label-shift-next">
+              <input type="radio" name="shift-day" id="shift-day-next" value="next_day">
+              <div class="radio-card-content">
+                <span class="radio-title">Madrugada siguiente (+1 día)</span>
+                <span class="radio-sub" id="shift-next-day-date">Turno tras las 00:00</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="forgotten-exit-time" class="form-label">Hora de Salida</label>
+          <input type="time" id="forgotten-exit-time" class="time-picker-large" required>
+          <small class="time-hint">* Las salidas se redondearán automáticamente al múltiplo de 5 anterior.</small>
+        </div>
+
+        <div id="forgotten-calc-preview" class="calc-preview hidden">
+          <span>⏱ Duración estimada: <strong id="forgotten-calc-hours">--</strong></span>
+        </div>
+
+        <div id="forgotten-error" class="login-error hidden"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btn-forgotten-cancel" class="btn-cancel">Cancelar</button>
+        <button type="button" id="btn-forgotten-submit" class="btn-primary btn-submit-request">
+          Enviar Petición al Jefe
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL - Modificar y Aprobar Petición (Admin) ===== -->
+  <div id="modal-modify-request" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Modificar y Aprobar Salida</h3>
+        <button id="btn-modify-req-close" class="btn-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="modify-req-employee" class="modify-req-emp-title"></p>
+        <p id="modify-req-details" class="modify-req-details-text"></p>
+        
+        <div class="form-group">
+          <label for="modify-req-date">Fecha de Salida</label>
+          <input type="date" id="modify-req-date" required>
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+          <label for="modify-req-time">Hora de Salida Definitiva</label>
+          <input type="time" id="modify-req-time" required>
+        </div>
+        <div id="modify-req-error" class="login-error hidden"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btn-modify-req-cancel" class="btn-cancel">Cancelar</button>
+        <button type="button" id="btn-modify-req-confirm" class="btn-primary">Confirmar y Aprobar</button>
+      </div>
     </div>
   </div>
 

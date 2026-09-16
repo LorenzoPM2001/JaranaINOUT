@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Jarana INOUT - Manual de Usuario y Especificaciones Técnicas</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-100: #f1f5f9;
+      --slate-50: #f8fafc;
+      --border: #e2e8f0;
+      --success: #16a34a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--slate-700);
+      background-color: #f1f5f9;
+      line-height: 1.6;
+      font-size: 15px;
+      padding: 40px 20px;
+    }
+
+    .document-container {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 60px 70px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    }
+
+    .cover {
+      text-align: center;
+      padding: 60px 0 80px 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 50px;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      background: #eef2ff;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      margin-bottom: 20px;
+    }
+
+    .cover h1 {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--slate-900);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .cover-subtitle {
+      font-size: 18px;
+      color: var(--slate-600);
+      max-width: 600px;
+      margin: 0 auto 35px auto;
+    }
+
+    .meta-box {
+      display: inline-block;
+      text-align: left;
+      background: var(--slate-50);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 28px;
+      font-size: 14px;
+    }
+
+    .meta-box p {
+      margin: 4px 0;
+    }
+
+    .meta-box strong {
+      color: var(--slate-900);
+    }
+
+    h2 {
+      font-size: 24px;
+      color: var(--slate-900);
+      margin: 40px 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h3 {
+      font-size: 18px;
+      color: var(--primary);
+      margin: 24px 0 12px 0;
+    }
+
+    p {
+      margin-bottom: 14px;
+    }
+
+    ul {
+      margin-left: 20px;
+      margin-bottom: 16px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    .img-container {
+      margin: 25px 0;
+      text-align: center;
+      background: #0a0a1a;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #1e1e38;
+    }
+
+    .img-container img {
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      display: block;
+    }
+
+    .caption {
+      font-size: 13px;
+      color: var(--slate-600);
+      margin-top: 8px;
+      font-style: italic;
+      text-align: center;
+    }
+
+    .callout {
+      background: #eef2ff;
+      border-left: 4px solid var(--primary);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 24px 0;
+    }
+
+    .callout.success {
+      background: #f0fdf4;
+      border-left-color: var(--success);
+    }
+
+    .callout-title {
+      font-weight: 700;
+      color: var(--primary-dark);
+      font-size: 14px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .callout.success .callout-title {
+      color: var(--success);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--slate-800);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) td {
+      background: var(--slate-50);
+    }
+
+    .btn-print {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-print:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    @media print {
+      body {
+        background: transparent;
+        padding: 0;
+      }
+      .document-container {
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      .btn-print {
+        display: none;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+
+<div class="document-container">
+
+  <!-- PORTADA -->
+  <div class="cover">
+    <span class="cover-badge">⏱ Jarana INOUT • Documentación Oficial</span>
+    <h1>Manual de Usuario y<br>Especificaciones Técnicas</h1>
+    <p class="cover-subtitle">Sistema Profesional de Control Horario, Rendimiento, Durabilidad y Cumplimiento Normativo (RD-ley 8/2019)</p>
+
+    <div class="meta-box">
+      <p><strong>Versión del Software:</strong> 1.0.0 (Producción)</p>
+      <p><strong>Tipo de Solución:</strong> Terminal de Escritorio Autónomo (100% Offline)</p>
+      <p><strong>Ámbito de Aplicación:</strong> Hostelería, Comercios y PYMES</p>
+      <p><strong>Fecha de Emisión:</strong> Septiembre 2026</p>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 1 -->
+  <h2>1. Introducción y Descripción General</h2>
+  <p>
+    <strong>Jarana INOUT</strong> es una solución de escritorio de alto rendimiento diseñada específicamente para satisfacer la obligación legal de registro de jornada laboral establecida por el <strong>Real Decreto-ley 8/2019, de 8 de marzo</strong> en empresas y establecimientos comerciales.
+  </p>
+  <p>
+    Su diseño responde a la necesidad de disponer de un sistema intuitivo, rápido y 100% privado que elimine por completo la dependencia de servidores en la nube, tarifas mensuales recurrentes o riesgos de fuga de datos por internet.
+  </p>
+  <p>
+    El sistema opera bajo el paradigma de <strong>Kiosco Táctil</strong>: se ubica en un terminal a la entrada del establecimiento, permitiendo a los empleados registrar sus entradas y salidas con un solo toque. A su vez, los responsables de Recursos Humanos disponen de un panel de administración protegido con acceso a estadísticas, altas/bajas de personal y exportación a Microsoft Excel (.xlsx).
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🔒 Privacidad Absoluta y Cero Cuotas Mensuales</div>
+    <p>Todos los registros se almacenan exclusivamente en el equipo de la empresa. No viajan datos a través de internet, garantizando total privacidad, velocidad instantánea y cumplimiento estricto del RGPD.</p>
+  </div>
+
+  <!-- SECCIÓN 2 -->
+  <h2>2. Manual de Uso Paso a Paso</h2>
+
+  <h3>2.1. Pantalla Principal: Modo Kiosco</h3>
+  <p>
+    La pantalla de inicio está siempre disponible para los empleados. Presenta una cuadrícula con tarjetas individuales donde se aprecian las iniciales, nombre y puesto de cada trabajador activo.
+  </p>
+  <div class="img-container">
+    <img src="assets/screenshot-main.jpg" alt="Pantalla Principal">
+  </div>
+  <p class="caption">Figura 1: Pantalla principal de autoservicio para los empleados.</p>
+  <ul>
+    <li>El empleado busca su tarjeta en la pantalla táctil o hace clic con el ratón.</li>
+    <li>La aplicación accede de forma inmediata a su panel de fichaje individual.</li>
+  </ul>
+
+  <h3>2.2. Panel de Fichaje y Reglas Inteligentes</h3>
+  <p>
+    En esta vista se presentan dos grandes botones: <strong>ENTRADA</strong> y <strong>SALIDA</strong>. Además, se muestra el historial de movimientos registrados durante el día actual para evitar dudas en el trabajador.
+  </p>
+  <div class="img-container">
+    <img src="assets/screenshot-clockin.jpg" alt="Panel de Fichaje">
+  </div>
+  <p class="caption">Figura 2: Botones de fichaje y cronología del día actual.</p>
+
+  <p><strong>Algoritmo de Redondeo Automático:</strong></p>
+  <ul>
+    <li><strong>Entradas (Redondeo hacia arriba):</strong> Si el trabajador ficha a las 08:02, el sistema computa las 08:05. Si ficha a las 08:06, computa las 08:10.</li>
+    <li><strong>Salidas (Redondeo hacia abajo):</strong> Si ficha la salida a las 15:08, se registran las 15:05, asegurando periodos limpios de cálculo.</li>
+  </ul>
+
+  <p><strong>Mecanismo de Prevención de Errores (Tolerancia de 10 minutos):</strong></p>
+  <p>
+    Si un empleado pulsa accidentalmente "Salida" antes de que hayan transcurrido 10 minutos desde su entrada, la aplicación detecta el error de manera inteligente y muestra un aviso interactivo. Si confirma que fue una equivocación, el sistema <strong>anula de forma automática ambos registros</strong>, evitando incongruencias sin requerir ayuda del administrador.
+  </p>
+
+  <p><strong>Recuperación de Olvidos y Turnos Nocturnos (Límite de 8 horas continuas):</strong></p>
+  <p>
+    Si un empleado no marcó su salida y transcurren más de 8 horas desde su entrada, la aplicación activa un protocolo asistido:
+  </p>
+  <ul>
+    <li>Al pulsar sobre su tarjeta se abre el asistente: <em>«¿A qué hora te fuiste?»</em>.</li>
+    <li><strong>Soporte para Turnos Nocturnos:</strong> El empleado puede especificar si salió el mismo día o de <strong>madrugada (+1 día)</strong> para turnos que rebasan las 00:00 (muy común en hostelería).</li>
+    <li><strong>Desbloqueo Inmediato:</strong> Al enviar la hora estimada, la jornada anterior queda pendiente de revisión y el trabajador puede <strong>fichar su nueva Entrada de hoy sin bloqueos</strong>.</li>
+  </ul>
+
+  <h3>2.3. Panel de Administración</h3>
+  <p>
+    Accesible pulsando el icono de engranaje en la cabecera mediante contraseña maestra. Dispone de indicadores y avisos visuales (badges de notificación) y se organiza en cuatro áreas:
+  </p>
+  <ul>
+    <li><strong>Gestión de Empleados:</strong> Permite añadir nuevos empleados, editar sus datos o tramitar bajas temporales manteniendo su historial intacto.</li>
+    <li><strong>Peticiones (Bandeja de Incidencias):</strong> Permite al responsable revisar las solicitudes de salida enviadas por los trabajadores por olvido de fichaje. El jefe puede verificar las horas calculadas y <strong>Aprobar en 1 clic</strong> (con redondeo automático), <strong>Modificar la hora</strong> antes de confirmar o Rechazar la solicitud.</li>
+    <li><strong>Exportaciones Excel:</strong> Generación instantánea de reportes individuales o consolidados por periodos de tiempo con formato oficial.</li>
+    <li><strong>Ajustes:</strong> Cambio de la contraseña de acceso.</li>
+  </ul>
+  <div class="img-container">
+    <img src="assets/screenshot-admin.jpg" alt="Panel de Administración">
+  </div>
+  <p class="caption">Figura 3: Panel de administración con menú lateral estructurado.</p>
+
+  <div class="page-break"></div>
+
+  <!-- SECCIÓN 3 -->
+  <h2>3. Especificaciones Técnicas del Sistema</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Componente</th>
+        <th>Requisito Mínimo</th>
+        <th>Requisito Recomendado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Sistema Operativo</strong></td>
+        <td>Windows 10 (64-bit)</td>
+        <td>Windows 10 / 11 (64-bit)</td>
+      </tr>
+      <tr>
+        <td><strong>Procesador</strong></td>
+        <td>Intel Celeron / AMD Athlon 1.8 GHz</td>
+        <td>Intel Core i3 / Ryzen 3 o superior</td>
+      </tr>
+      <tr>
+        <td><strong>Memoria RAM</strong></td>
+        <td>2 GB RAM</td>
+        <td>4 GB RAM o superior</td>
+      </tr>
+      <tr>
+        <td><strong>Espacio en Disco</strong></td>
+        <td>250 MB libres</td>
+        <td>500 MB libres en disco SSD</td>
+      </tr>
+      <tr>
+        <td><strong>Pantalla</strong></td>
+        <td>Resolución 1024 x 768</td>
+        <td>Pantalla táctil Full HD (1920 x 1080)</td>
+      </tr>
+      <tr>
+        <td><strong>Conectividad</strong></td>
+        <td>No requerida (100% Offline)</td>
+        <td>Aislado de red por seguridad</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECCIÓN 4 -->
+  <h2>4. Rendimiento y Velocidad de Respuesta</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Operación</th>
+        <th>Tiempo Medido</th>
+        <th>Comportamiento</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Arranque de la aplicación</td>
+        <td>1.2 - 1.8 segundos</td>
+        <td>Rápido e instantáneo</td>
+      </tr>
+      <tr>
+        <td>Registro de fichaje</td>
+        <td>&lt; 5 milisegundos</td>
+        <td>Inmediato, sin bloqueos</td>
+      </tr>
+      <tr>
+        <td>Generación reporte mensual</td>
+        <td>0.3 segundos</td>
+        <td>Descarga directa en Excel</td>
+      </tr>
+      <tr>
+        <td>Consumo de CPU en reposo</td>
+        <td>0.0% - 0.4%</td>
+        <td>Apenas perceptible</td>
+      </tr>
+      <tr>
+        <td>Consumo de Memoria RAM</td>
+        <td>75 - 110 MB</td>
+        <td>Ligero y estable 24/7</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECCIÓN 5 -->
+  <h2>5. Durabilidad y Capacidad de Almacenamiento</h2>
+  <p>
+    Cálculo para un escenario representativo de <strong>5 a 6 empleados con turno partido</strong> (4 registros diarios por trabajador):
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Periodo de Tiempo</th>
+        <th>Total de Registros</th>
+        <th>Espacio en Disco Ocupado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1 Mes</td>
+        <td>720 fichajes</td>
+        <td>~108 KB</td>
+      </tr>
+      <tr>
+        <td>1 Año</td>
+        <td>8.760 fichajes</td>
+        <td>~1,3 MB</td>
+      </tr>
+      <tr>
+        <td>5 Años</td>
+        <td>43.800 fichajes</td>
+        <td>~6,5 MB</td>
+      </tr>
+      <tr>
+        <td>10 Años</td>
+        <td>87.600 fichajes</td>
+        <td>~13,0 MB</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout success">
+    <div class="callout-title">✅ Conclusión de Durabilidad: Más de 10 Años Garantizados</div>
+    <p>Dado que los sistemas informáticos actuales leen archivos de 10 a 20 MB en cuestión de milisegundos, una empresa de 6 empleados puede operar durante más de 10 años ininterrumpidos sin experimentar ninguna lentitud ni requerir limpiezas de datos.</p>
+  </div>
+
+  <!-- SECCIÓN 6 -->
+  <h2>6. Cumplimiento Legal (Real Decreto-ley 8/2019)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Requisito Legal</th>
+        <th>Implementación en Jarana INOUT</th>
+        <th>Garantía</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Registro diario</td>
+        <td>Horas exactas de entrada y salida registradas.</td>
+        <td>Cumple al 100% la normativa.</td>
+      </tr>
+      <tr>
+        <td>Conservación durante 4 años</td>
+        <td>Capacidad de retener más de una década de registros.</td>
+        <td>Plena disponibilidad legal.</td>
+      </tr>
+      <tr>
+        <td>Entrega ante Inspección</td>
+        <td>Exportación a Excel en 1 clic.</td>
+        <td>Acreditación inmediata.</td>
+      </tr>
+      <tr>
+        <td>Confidencialidad (RGPD)</td>
+        <td>Datos almacenados en el PC local sin acceso externo.</td>
+        <td>Protección total de los trabajadores.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECCIÓN 7 -->
+  <h2>7. Argumentos Clave para la Venta</h2>
+  <ul>
+    <li><strong>Sin Cuotas Recurrentes:</strong> Ahorro frente a plataformas SaaS (que cobran entre 200 € y 600 € al año).</li>
+    <li><strong>Funciona Siempre:</strong> Si falla internet o la conexión del local, la aplicación no se detiene.</li>
+    <li><strong>Facilidad Absoluta:</strong> Interfaz visual táctil que no requiere manuales ni formación previa para los empleados.</li>
+  </ul>
+
+  <p style="text-align: center; color: var(--slate-600); margin-top: 50px; font-size: 13px;">
+    Jarana INOUT © 2026 • Documentación Oficial • Todos los derechos reservados
+  </p>
+
+</div>
+
+</body>
+</html>

@@ -26,5 +26,12 @@ contextBridge.exposeInMainWorld('api', {
 
   // Excel
   exportExcel: (employeeId, month, year) => ipcRenderer.invoke('export-excel', { employeeId, month, year }),
-  exportExcelAll: (month, year) => ipcRenderer.invoke('export-excel-all', { month, year })
+  exportExcelAll: (month, year) => ipcRenderer.invoke('export-excel-all', { month, year }),
+
+  // Requests (Peticiones)
+  submitExitRequest: (data) => ipcRenderer.invoke('submit-exit-request', data),
+  getRequests: () => ipcRenderer.invoke('get-requests'),
+  getPendingRequestsCount: () => ipcRenderer.invoke('get-pending-requests-count'),
+  approveRequest: (data) => ipcRenderer.invoke('approve-request', data),
+  rejectRequest: (data) => ipcRenderer.invoke('reject-request', data)
 });
