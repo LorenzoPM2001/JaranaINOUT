@@ -74,7 +74,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     title: 'JaranaINOUT',
-    icon: path.join(__dirname, 'assets', 'icon.png'),
+    icon: path.join(__dirname, 'assets', 'icon.ico'),
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
