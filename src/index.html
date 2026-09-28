@@ -147,6 +147,9 @@
             <li class="admin-nav-item" data-target="tab-requests" id="nav-item-requests">
               <span class="nav-icon">📩</span> Peticiones <span id="requests-badge" class="badge-count hidden">0</span>
             </li>
+            <li class="admin-nav-item" data-target="tab-shifts" id="nav-item-shifts">
+              <span class="nav-icon">⏰</span> Turnos
+            </li>
             <li class="admin-nav-item" data-target="tab-exports">
               <span class="nav-icon">📊</span> Exportaciones
             </li>
@@ -178,14 +181,64 @@
           <div id="tab-requests" class="admin-tab hidden">
             <section class="admin-section">
               <div class="section-header">
-                <h3>Peticiones de Olvido de Salida</h3>
+                <h3>Peticiones de Empleados (Entradas y Salidas)</h3>
                 <span id="requests-pending-indicator" class="badge-pill">0 pendientes</span>
               </div>
               <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">
-                Solicitudes enviadas por empleados que olvidaron fichar la salida tras superar 8 horas de jornada. Revisa y confirma o ajusta la hora para registrarla formalmente.
+                Solicitudes enviadas por empleados por olvido de salida o entrada con retraso tras inicio de turno. Revisa, modifica la hora si procede, y aprueba o rechaza.
               </p>
               <div id="admin-requests-list" class="requests-list">
                 <!-- Se cargan dinámicamente -->
+              </div>
+            </section>
+          </div>
+
+          <!-- SHIFTS TAB -->
+          <div id="tab-shifts" class="admin-tab hidden">
+            <section class="admin-section">
+              <div class="section-header">
+                <h3>Configuración de Turnos de Entrada</h3>
+              </div>
+              <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">
+                Configura los horarios de inicio de los turnos de trabajo. Si un empleado ficha tras superar la hora de inicio de su turno (+ margen de tolerancia), el sistema le preguntará la hora exacta en la que entró a trabajar para que quede reflejada previa aprobación.
+              </p>
+
+              <!-- Tolerance setting -->
+              <div class="tolerance-config-card">
+                <div class="form-row" style="align-items: flex-end;">
+                  <div class="form-group" style="flex: 1;">
+                    <label for="shift-threshold-minutes">Margen de Tolerancia de Retraso (minutos)</label>
+                    <input type="number" id="shift-threshold-minutes" min="1" max="180" value="15" placeholder="15">
+                    <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Minutos de cortesía tras la hora de inicio antes de solicitar justificación de entrada (por defecto: 15 min).</small>
+                  </div>
+                  <button id="btn-save-threshold" class="btn-secondary" style="height: 42px; margin-bottom: 2px;">Guardar Margen</button>
+                </div>
+              </div>
+
+              <!-- Add shift form -->
+              <div class="add-shift-card" style="margin-top: 20px;">
+                <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--text-primary);">Añadir Nuevo Turno</h4>
+                <div class="form-row">
+                  <div class="form-group" style="flex: 2;">
+                    <label for="shift-name">Nombre del Turno</label>
+                    <input type="text" id="shift-name" placeholder="Ej: Turno Mañana, Turno Tarde, Noche...">
+                  </div>
+                  <div class="form-group" style="flex: 1;">
+                    <label for="shift-start-time">Hora de Comienzo</label>
+                    <input type="time" id="shift-start-time" required>
+                  </div>
+                </div>
+                <button id="btn-add-shift" class="btn-primary" style="margin-top: 8px;">
+                  + Añadir Turno
+                </button>
+              </div>
+
+              <!-- Shifts list -->
+              <div class="shifts-list-container" style="margin-top: 24px;">
+                <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--text-primary);">Turnos Configurados</h4>
+                <div id="admin-shifts-list" class="shifts-list">
+                  <!-- Se cargan dinámicamente -->
+                </div>
               </div>
             </section>
           </div>
@@ -393,11 +446,54 @@
     </div>
   </div>
 
+  <!-- ===== MODAL - Entrada con Retraso (Empleado) ===== -->
+  <div id="modal-late-entry" class="modal-overlay hidden">
+    <div class="modal modal-forgotten">
+      <div class="modal-header">
+        <h3>⏰ Entrada con Retraso de Turno</h3>
+        <button id="btn-late-entry-close" class="btn-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="forgotten-alert-box" style="border-left-color: #6366F1;">
+          <span class="alert-icon">⏱</span>
+          <div>
+            <p id="late-entry-shift-info">Tu turno comenzaba a las <strong>--:--</strong>.</p>
+            <p class="alert-sub" id="late-entry-now-info">Son las <strong>--:--</strong>.</p>
+          </div>
+        </div>
+
+        <p class="forgotten-heading">¿A qué hora entraste realmente a trabajar?</p>
+        <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 14px;" id="late-entry-limits-hint">
+          Puedes indicar una hora hasta 7 horas antes o hasta 30 min antes del siguiente turno.
+        </p>
+
+        <div class="form-group">
+          <label for="late-entry-time" class="form-label">Hora Real de Entrada</label>
+          <input type="time" id="late-entry-time" class="time-picker-large" required>
+          <small class="time-hint">* Las entradas se redondearán automáticamente al múltiplo de 5 superior.</small>
+        </div>
+
+        <div id="late-entry-error" class="login-error hidden"></div>
+      </div>
+      <div class="modal-actions" style="display: flex; flex-direction: column; gap: 8px;">
+        <button type="button" id="btn-late-entry-submit" class="btn-primary" style="width: 100%;">
+          Enviar Petición con Hora Indicada
+        </button>
+        <button type="button" id="btn-late-entry-now" class="btn-secondary" style="width: 100%;">
+          Fichar con la Hora Actual (Sin Petición)
+        </button>
+        <button type="button" id="btn-late-entry-cancel" class="btn-cancel" style="width: 100%;">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== MODAL - Modificar y Aprobar Petición (Admin) ===== -->
   <div id="modal-modify-request" class="modal-overlay hidden">
     <div class="modal">
       <div class="modal-header">
-        <h3>Modificar y Aprobar Salida</h3>
+        <h3 id="modify-req-title">Modificar y Aprobar</h3>
         <button id="btn-modify-req-close" class="btn-modal-close">&times;</button>
       </div>
       <div class="modal-body">
@@ -405,12 +501,12 @@
         <p id="modify-req-details" class="modify-req-details-text"></p>
         
         <div class="form-group">
-          <label for="modify-req-date">Fecha de Salida</label>
+          <label for="modify-req-date" id="modify-req-date-label">Fecha</label>
           <input type="date" id="modify-req-date" required>
         </div>
 
         <div class="form-group" style="margin-top: 12px;">
-          <label for="modify-req-time">Hora de Salida Definitiva</label>
+          <label for="modify-req-time" id="modify-req-time-label">Hora Definitiva</label>
           <input type="time" id="modify-req-time" required>
         </div>
         <div id="modify-req-error" class="login-error hidden"></div>

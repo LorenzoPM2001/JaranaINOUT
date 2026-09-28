@@ -21,7 +21,9 @@ function getDefaultData() {
     employees: [],
     archivedEmployees: [],
     records: [],
-    requests: []
+    requests: [],
+    shifts: [],
+    lateEntryThresholdMinutes: 15
   };
 }
 
@@ -38,6 +40,13 @@ function loadData() {
       // Backward compatibility: ensure requests exists
       if (!data.requests) {
         data.requests = [];
+      }
+      // Backward compatibility: ensure shifts exists
+      if (!data.shifts) {
+        data.shifts = [];
+      }
+      if (data.lateEntryThresholdMinutes === undefined) {
+        data.lateEntryThresholdMinutes = 15;
       }
       return data;
     }
@@ -68,6 +77,34 @@ function generateColor() {
     '#FD79A8', '#6C5CE7', '#81ECEC', '#DFE6E9', '#B2BEC3'
   ];
   return colors[Math.floor(Math.random() * colors.length)];
+}
+
+// Find the shift that started most recently before current time
+function findCurrentShift(shifts) {
+  if (!shifts || shifts.length === 0) return null;
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const sorted = shifts.map(s => {
+    const [h, m] = s.startTime.split(':').map(Number);
+    return { ...s, minutes: h * 60 + m };
+  }).sort((a, b) => a.minutes - b.minutes);
+  let current = sorted[sorted.length - 1];
+  for (const s of sorted) {
+    if (s.minutes <= nowMinutes) current = s;
+  }
+  return current;
+}
+
+// Find the next shift after the given one
+function findNextShift(shifts, currentShift) {
+  if (!shifts || shifts.length <= 1) return null;
+  const sorted = shifts.map(s => {
+    const [h, m] = s.startTime.split(':').map(Number);
+    return { ...s, minutes: h * 60 + m };
+  }).sort((a, b) => a.minutes - b.minutes);
+  const idx = sorted.findIndex(s => s.id === currentShift.id);
+  if (idx === -1) return null;
+  return sorted[(idx + 1) % sorted.length];
 }
 
 let mainWindow;
@@ -176,7 +213,7 @@ app.whenReady().then(() => {
   });
 
   // Clock in
-  ipcMain.handle('clock-in', (event, employeeId) => {
+  ipcMain.handle('clock-in', (event, employeeId, options) => {
     const data = loadData();
     // Check last record GLOBALLY (not just today) for overnight shifts
     const empRecords = data.records
@@ -199,6 +236,49 @@ app.whenReady().then(() => {
           };
         }
         return { error: 'Ya tienes una entrada registrada. Registra la salida primero.' };
+      }
+    }
+
+    // Check for late entry (if shifts configured and not skipping)
+    if (!(options && options.skipShiftCheck) && data.shifts && data.shifts.length > 0) {
+      const currentShift = findCurrentShift(data.shifts);
+      if (currentShift) {
+        const threshold = data.lateEntryThresholdMinutes || 15;
+        const checkNow = new Date();
+        const nowMins = checkNow.getHours() * 60 + checkNow.getMinutes();
+        const [sh, sm] = currentShift.startTime.split(':').map(Number);
+        const shiftMins = sh * 60 + sm;
+        let diff = nowMins - shiftMins;
+        if (diff < 0) diff += 24 * 60;
+        if (diff > threshold && diff <= 7 * 60) {
+          const hasPendingEntryReq = (data.requests || []).some(
+            r => r.employeeId === employeeId && r.type === 'late_entry' && r.status === 'pending'
+          );
+          if (!hasPendingEntryReq) {
+            const nextShift = findNextShift(data.shifts, currentShift);
+            let isWithinNextShiftWindow = false;
+            if (nextShift) {
+              const [nsh, nsm] = nextShift.startTime.split(':').map(Number);
+              const nextShiftMins = nsh * 60 + nsm;
+              let minsToNext = nextShiftMins - nowMins;
+              if (minsToNext < 0) minsToNext += 24 * 60;
+              // If within 30 minutes before next shift, employee is arriving for the next shift
+              if (minsToNext <= 30) {
+                isWithinNextShiftWindow = true;
+              }
+            }
+
+            if (!isWithinNextShiftWindow) {
+              return {
+                lateEntry: true,
+                message: `Tu turno "${currentShift.name}" comenzaba a las ${currentShift.startTime}.`,
+                currentShift,
+                nextShift,
+                lateMinutes: diff
+              };
+            }
+          }
+        }
       }
     }
 
@@ -453,19 +533,37 @@ app.whenReady().then(() => {
     return data.requests.filter(r => r.status === 'pending').length;
   });
 
-  // Approve request
-  ipcMain.handle('approve-request', (event, { requestId, customExitTimestamp }) => {
+  // Approve request (handles both exit and late_entry requests)
+  ipcMain.handle('approve-request', (event, { requestId, customExitTimestamp, customEntryTimestamp }) => {
     const data = loadData();
     data.requests = data.requests || [];
     const req = data.requests.find(r => r.id === requestId);
     if (!req) return { error: 'Petición no encontrada' };
 
+    if (req.type === 'late_entry') {
+      const targetTime = customEntryTimestamp ? new Date(customEntryTimestamp) : new Date(req.requestedEntryTimestamp);
+      const exactMinutes = targetTime.getMinutes() + (targetTime.getSeconds() / 60);
+      const roundedMinutes = Math.ceil(exactMinutes / 5) * 5;
+      targetTime.setMinutes(roundedMinutes, 0, 0);
+      const recordIdx = data.records.findIndex(r => r.requestId === req.id);
+      if (recordIdx !== -1) {
+        data.records[recordIdx].timestamp = targetTime.toISOString();
+        data.records[recordIdx].origin = 'entry_request_approved';
+        delete data.records[recordIdx].actualTimestamp;
+      }
+      data.records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      req.status = 'approved';
+      req.approvedAt = new Date().toISOString();
+      req.finalEntryTimestamp = targetTime.toISOString();
+      saveData(data);
+      return { success: true };
+    }
+
+    // Exit request (original logic)
     const targetExitTime = customExitTimestamp ? new Date(customExitTimestamp) : new Date(req.requestedExitTimestamp);
     const exactMinutes = targetExitTime.getMinutes() + (targetExitTime.getSeconds() / 60);
     const roundedMinutes = Math.floor(exactMinutes / 5) * 5;
     targetExitTime.setMinutes(roundedMinutes, 0, 0);
-
-    // Insert official out record
     const record = {
       employeeId: req.employeeId,
       type: 'out',
@@ -475,7 +573,6 @@ app.whenReady().then(() => {
     };
     data.records.push(record);
     data.records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
     req.status = 'approved';
     req.approvedAt = new Date().toISOString();
     req.finalExitTimestamp = targetExitTime.toISOString();
@@ -483,12 +580,23 @@ app.whenReady().then(() => {
     return { success: true, record };
   });
 
-  // Reject request
+  // Reject request (handles both exit and late_entry requests)
   ipcMain.handle('reject-request', (event, { requestId, reason }) => {
     const data = loadData();
     data.requests = data.requests || [];
     const req = data.requests.find(r => r.id === requestId);
     if (!req) return { error: 'Petición no encontrada' };
+
+    if (req.type === 'late_entry') {
+      const recordIdx = data.records.findIndex(r => r.requestId === req.id);
+      if (recordIdx !== -1) {
+        const actualTime = data.records[recordIdx].actualTimestamp || req.actualClockInTimestamp;
+        if (actualTime) data.records[recordIdx].timestamp = actualTime;
+        data.records[recordIdx].origin = 'entry_request_rejected';
+        delete data.records[recordIdx].actualTimestamp;
+      }
+      data.records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    }
 
     req.status = 'rejected';
     req.rejectedAt = new Date().toISOString();
@@ -729,6 +837,64 @@ app.whenReady().then(() => {
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
     fs.writeFileSync(result.filePath, buffer);
     return { success: true, path: result.filePath };
+  });
+
+  // === Shifts Configuration ===
+
+  ipcMain.handle('get-shifts', () => {
+    const data = loadData();
+    return { shifts: data.shifts || [], lateEntryThresholdMinutes: data.lateEntryThresholdMinutes || 15 };
+  });
+
+  ipcMain.handle('save-shifts', (event, { shifts, lateEntryThresholdMinutes }) => {
+    const data = loadData();
+    data.shifts = shifts || [];
+    if (lateEntryThresholdMinutes !== undefined) data.lateEntryThresholdMinutes = lateEntryThresholdMinutes;
+    saveData(data);
+    return { success: true };
+  });
+
+  // Submit late entry request
+  ipcMain.handle('submit-entry-request', (event, { employeeId, requestedEntryTimestamp, shiftName, shiftStartTime }) => {
+    const data = loadData();
+    data.requests = data.requests || [];
+    const employee = data.employees.find(e => e.id === employeeId);
+    if (!employee) return { error: 'Empleado no encontrado' };
+
+    const now = new Date();
+    const entryDate = new Date(requestedEntryTimestamp);
+    const eMin = entryDate.getMinutes() + (entryDate.getSeconds() / 60);
+    const rMin = Math.ceil(eMin / 5) * 5;
+    entryDate.setMinutes(rMin, 0, 0);
+
+    const requestId = 'req-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 6);
+
+    const record = {
+      employeeId,
+      type: 'in',
+      timestamp: entryDate.toISOString(),
+      origin: 'entry_request',
+      requestId: requestId,
+      actualTimestamp: now.toISOString()
+    };
+    data.records.push(record);
+    data.records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    const newRequest = {
+      id: requestId,
+      type: 'late_entry',
+      employeeId,
+      employeeName: `${employee.name} ${employee.lastName}`,
+      shiftName: shiftName || '',
+      shiftStartTime: shiftStartTime || '',
+      actualClockInTimestamp: now.toISOString(),
+      requestedEntryTimestamp: entryDate.toISOString(),
+      status: 'pending',
+      createdAt: now.toISOString()
+    };
+    data.requests.push(newRequest);
+    saveData(data);
+    return { success: true, request: newRequest, record };
   });
 
   app.on('activate', () => {

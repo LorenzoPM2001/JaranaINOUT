@@ -255,7 +255,7 @@
     <p class="cover-subtitle">Sistema Profesional de Control Horario, Rendimiento, Durabilidad y Cumplimiento Normativo (RD-ley 8/2019)</p>
 
     <div class="meta-box">
-      <p><strong>Versión del Software:</strong> 1.0.0 (Producción)</p>
+      <p><strong>Versión del Software:</strong> 1.3.9 (Producción)</p>
       <p><strong>Tipo de Solución:</strong> Terminal de Escritorio Autónomo (100% Offline)</p>
       <p><strong>Ámbito de Aplicación:</strong> Hostelería, Comercios y PYMES</p>
       <p><strong>Fecha de Emisión:</strong> Septiembre 2026</p>
@@ -325,15 +325,43 @@
     <li><strong>Desbloqueo Inmediato:</strong> Al enviar la hora estimada, la jornada anterior queda pendiente de revisión y el trabajador puede <strong>fichar su nueva Entrada de hoy sin bloqueos</strong>.</li>
   </ul>
 
+  <p><strong>Control Inteligente de Entradas Tardías (Gestión de Turnos):</strong></p>
+  <p>
+    Para evitar la pérdida del cómputo de horas reales cuando un trabajador se incorpora a su puesto pero olvida pulsar el botón de fichaje al instante, Jarana INOUT cuenta con un detector proactivo de turnos:
+  </p>
+  <ul>
+    <li><strong>Detección Automática tras Inicio de Turno:</strong> Cuando el administrador configura los turnos de trabajo (ej. 08:00, 16:00, etc.), si un empleado ficha después de la hora oficial más el margen de tolerancia configurado (por defecto 15 minutos), el sistema abre automáticamente el asistente interactivo: <em>«¿A qué hora entraste realmente a trabajar?»</em>.</li>
+    <li><strong>Límites y Reglas de Validación:</strong>
+      <ul>
+        <li><strong>Límite pasado:</strong> Se permite declarar una hora de entrada de hasta <strong>7 horas antes</strong> de la hora actual.</li>
+        <li><strong>Límite futuro / Solapamiento:</strong> La hora indicada no puede rebasar el límite de <strong>30 minutos antes del comienzo del siguiente turno</strong>, impidiendo invasiones de horario entre cuadrillas.</li>
+      </ul>
+    </li>
+    <li><strong>Opciones de Registro para el Empleado:</strong>
+      <ul>
+        <li><em>«Enviar Petición con Hora Indicada»:</em> Registra la entrada provisionalmente y envía la solicitud formal a la bandeja del administrador para su validación oficial.</li>
+        <li><em>«Fichar con la Hora Actual (Sin Petición)»:</em> En caso de que el empleado realmente se haya incorporado con retraso justificado o voluntario en ese momento, puede fichar directamente con la hora actual sin generar peticiones innecesarias.</li>
+      </ul>
+    </li>
+    <li><strong>Anticipación al Siguiente Turno:</strong> Si el empleado ficha dentro de los 30 minutos previos al comienzo del turno siguiente, el sistema lo identifica como llegada temprana a dicho turno y registra la entrada normal sin activar la alerta de retraso.</li>
+  </ul>
+
   <h3>2.3. Panel de Administración</h3>
   <p>
-    Accesible pulsando el icono de engranaje en la cabecera mediante contraseña maestra. Dispone de indicadores y avisos visuales (badges de notificación) y se organiza en cuatro áreas:
+    Accesible pulsando el icono de engranaje en la cabecera mediante contraseña maestra. Dispone de indicadores y avisos visuales (badges de notificación de peticiones pendientes) y se organiza en cinco áreas principales:
   </p>
   <ul>
     <li><strong>Gestión de Empleados:</strong> Permite añadir nuevos empleados, editar sus datos o tramitar bajas temporales manteniendo su historial intacto.</li>
-    <li><strong>Peticiones (Bandeja de Incidencias):</strong> Permite al responsable revisar las solicitudes de salida enviadas por los trabajadores por olvido de fichaje. El jefe puede verificar las horas calculadas y <strong>Aprobar en 1 clic</strong> (con redondeo automático), <strong>Modificar la hora</strong> antes de confirmar o Rechazar la solicitud.</li>
+    <li><strong>Configuración de Turnos:</strong> Permite crear y gestionar los turnos de trabajo de la empresa indicando su nombre (Mañana, Tarde, Noche, etc.) y su hora oficial de inicio. También permite personalizar el <strong>Margen de Tolerancia de Retraso</strong> (en minutos) antes de solicitar justificación de entrada.</li>
+    <li><strong>Peticiones (Bandeja de Incidencias):</strong> Permite al responsable gestionar las solicitudes de los trabajadores con distinción visual inmediata:
+      <ul>
+        <li><strong>Olvidos de Salida:</strong> Revisión de la hora solicitada tras superar 8 horas de turno continuo.</li>
+        <li><strong>Entradas Tardías:</strong> Muestra el turno asignado, la hora física en la que se pulsó el botón y la hora que el trabajador solicita haber entrado realmente.</li>
+      </ul>
+      El administrador dispone de tres acciones: <strong>✓ Aprobar en 1 clic</strong> (con redondeo reglamentario), <strong>Modificar Hora</strong> (para corregir fecha y hora exacta tras acordarlo) o <strong>Rechazar</strong> (manteniendo la hora física del fichaje).
+    </li>
     <li><strong>Exportaciones Excel:</strong> Generación instantánea de reportes individuales o consolidados por periodos de tiempo con formato oficial.</li>
-    <li><strong>Ajustes:</strong> Cambio de la contraseña de acceso.</li>
+    <li><strong>Ajustes:</strong> Cambio de la contraseña de acceso y usuario administrador.</li>
   </ul>
   <div class="img-container">
     <img src="assets/screenshot-admin.jpg" alt="Panel de Administración">
@@ -497,6 +525,11 @@
         <td>Confidencialidad (RGPD)</td>
         <td>Datos almacenados en el PC local sin acceso externo.</td>
         <td>Protección total de los trabajadores.</td>
+      </tr>
+      <tr>
+        <td>Trazabilidad de Incidencias</td>
+        <td>Bandeja de peticiones con registro de motivos, horas reales y validación explícita del administrador.</td>
+        <td>Total veracidad y transparencia ante la Inspección de Trabajo (ITSS).</td>
       </tr>
     </tbody>
   </table>

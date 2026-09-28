@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('api', {
   permanentlyDeleteEmployee: (id) => ipcRenderer.invoke('permanently-delete-employee', id),
 
   // Clock in/out
-  clockIn: (employeeId) => ipcRenderer.invoke('clock-in', employeeId),
+  clockIn: (employeeId, options) => ipcRenderer.invoke('clock-in', employeeId, options),
   clockOut: (employeeId) => ipcRenderer.invoke('clock-out', employeeId),
   cancelLastEntry: (employeeId) => ipcRenderer.invoke('cancel-last-entry', employeeId),
 
@@ -30,8 +30,13 @@ contextBridge.exposeInMainWorld('api', {
 
   // Requests (Peticiones)
   submitExitRequest: (data) => ipcRenderer.invoke('submit-exit-request', data),
+  submitEntryRequest: (data) => ipcRenderer.invoke('submit-entry-request', data),
   getRequests: () => ipcRenderer.invoke('get-requests'),
   getPendingRequestsCount: () => ipcRenderer.invoke('get-pending-requests-count'),
   approveRequest: (data) => ipcRenderer.invoke('approve-request', data),
-  rejectRequest: (data) => ipcRenderer.invoke('reject-request', data)
+  rejectRequest: (data) => ipcRenderer.invoke('reject-request', data),
+
+  // Shifts (Turnos)
+  getShifts: () => ipcRenderer.invoke('get-shifts'),
+  saveShifts: (data) => ipcRenderer.invoke('save-shifts', data)
 });

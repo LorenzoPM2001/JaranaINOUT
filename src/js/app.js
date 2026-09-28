@@ -99,12 +99,38 @@
   const btnModifyReqClose = document.getElementById('btn-modify-req-close');
   const btnModifyReqCancel = document.getElementById('btn-modify-req-cancel');
   const btnModifyReqConfirm = document.getElementById('btn-modify-req-confirm');
+  const modifyReqTitle = document.getElementById('modify-req-title');
   const modifyReqEmployee = document.getElementById('modify-req-employee');
   const modifyReqDetails = document.getElementById('modify-req-details');
+  const modifyReqDateLabel = document.getElementById('modify-req-date-label');
   const modifyReqDate = document.getElementById('modify-req-date');
+  const modifyReqTimeLabel = document.getElementById('modify-req-time-label');
   const modifyReqTime = document.getElementById('modify-req-time');
   const modifyReqError = document.getElementById('modify-req-error');
   let currentModifyingRequestId = null;
+  let currentModifyingRequest = null;
+
+  // Shifts Management (Admin)
+  const navItemShifts = document.getElementById('nav-item-shifts');
+  const shiftThresholdMinutes = document.getElementById('shift-threshold-minutes');
+  const btnSaveThreshold = document.getElementById('btn-save-threshold');
+  const shiftName = document.getElementById('shift-name');
+  const shiftStartTime = document.getElementById('shift-start-time');
+  const btnAddShift = document.getElementById('btn-add-shift');
+  const adminShiftsList = document.getElementById('admin-shifts-list');
+
+  // Late Entry Modal (Employee)
+  const modalLateEntry = document.getElementById('modal-late-entry');
+  const btnLateEntryClose = document.getElementById('btn-late-entry-close');
+  const btnLateEntryCancel = document.getElementById('btn-late-entry-cancel');
+  const btnLateEntrySubmit = document.getElementById('btn-late-entry-submit');
+  const btnLateEntryNow = document.getElementById('btn-late-entry-now');
+  const lateEntryShiftInfo = document.getElementById('late-entry-shift-info');
+  const lateEntryNowInfo = document.getElementById('late-entry-now-info');
+  const lateEntryLimitsHint = document.getElementById('late-entry-limits-hint');
+  const lateEntryTime = document.getElementById('late-entry-time');
+  const lateEntryError = document.getElementById('late-entry-error');
+  let currentLateEntryData = null;
 
   // Toast container
   const toastContainer = document.getElementById('toast-container');
@@ -337,6 +363,11 @@
       return;
     }
 
+    if (record.lateEntry) {
+      openLateEntryModal(selectedEmployee, record);
+      return;
+    }
+
     if (record.error) {
       showToast(record.error, 'error');
       return;
@@ -472,6 +503,8 @@
 
       if (targetId === 'tab-requests') {
         loadAdminRequests();
+      } else if (targetId === 'tab-shifts') {
+        loadAdminShifts();
       }
     });
   });
@@ -943,7 +976,7 @@
     adminRequestsList.innerHTML = '';
 
     if (!requests || requests.length === 0) {
-      adminRequestsList.innerHTML = '<div class="no-requests">🎉 No hay peticiones de salida pendientes ni registradas.</div>';
+      adminRequestsList.innerHTML = '<div class="no-requests">🎉 No hay peticiones de empleados pendientes ni registradas.</div>';
       return;
     }
 
@@ -951,62 +984,113 @@
       const card = document.createElement('div');
       card.className = `request-card ${req.status}`;
 
-      const entryDate = new Date(req.entryTimestamp);
-      const exitDate = new Date(req.finalExitTimestamp || req.requestedExitTimestamp);
+      const isLateEntry = req.type === 'late_entry';
       const createdDate = new Date(req.createdAt);
-
-      const entryStr = entryDate.toLocaleDateString('es-ES', {
-        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-      });
-      const exitStr = exitDate.toLocaleDateString('es-ES', {
-        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-      });
       const createdStr = createdDate.toLocaleDateString('es-ES', {
         day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
       });
-
-      const totalMinutes = Math.max(0, Math.floor((exitDate.getTime() - entryDate.getTime()) / 60000));
-      const hours = Math.floor(totalMinutes / 60);
-      const mins = totalMinutes % 60;
-      const durationStr = `${hours}h ${mins > 0 ? mins + 'm' : ''}`;
-
       const statusText = req.status === 'pending' ? 'Pendiente' : (req.status === 'approved' ? 'Aprobada' : 'Rechazada');
 
-      card.innerHTML = `
-        <div class="request-card-header">
-          <div class="request-emp-info">
-            <div class="request-avatar" style="background: #6366F1">⏱</div>
-            <div>
-              <div class="request-emp-name">${req.employeeName || 'Empleado'}</div>
-              <div class="request-created-at">Solicitado el ${createdStr} ${req.shiftDay === 'next_day' ? '• Turno de madrugada (+1 día)' : ''}</div>
+      if (isLateEntry) {
+        const actualDate = new Date(req.actualClockInTimestamp || req.createdAt);
+        const actualStr = actualDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        const reqEntryDate = new Date(req.finalEntryTimestamp || req.requestedEntryTimestamp);
+        const reqEntryTimeStr = reqEntryDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        const reqEntryDayStr = reqEntryDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+
+        card.innerHTML = `
+          <div class="request-card-header">
+            <div class="request-emp-info">
+              <div class="request-avatar" style="background: #4F46E5">📥</div>
+              <div>
+                <div class="request-emp-name">${req.employeeName || 'Empleado'}</div>
+                <div class="request-created-at">
+                  <span class="request-type-badge late_entry">Entrada Tardía</span>
+                  Solicitado el ${createdStr}
+                </div>
+              </div>
+            </div>
+            <span class="request-status-badge ${req.status}">${statusText}</span>
+          </div>
+
+          <div class="request-details-grid">
+            <div class="request-detail-item">
+              <span class="request-detail-label">Turno / Inicio</span>
+              <span class="request-detail-value">${req.shiftName || 'Turno'} (${req.shiftStartTime || '--:--'})</span>
+            </div>
+            <div class="request-detail-item">
+              <span class="request-detail-label">Fichaje Físico</span>
+              <span class="request-detail-value">${actualStr}</span>
+            </div>
+            <div class="request-detail-item">
+              <span class="request-detail-label">Entrada ${req.status === 'approved' ? 'Aprobada' : 'Solicitada'}</span>
+              <span class="request-detail-value highlight">${reqEntryDayStr} a las ${reqEntryTimeStr}</span>
             </div>
           </div>
-          <span class="request-status-badge ${req.status}">${statusText}</span>
-        </div>
 
-        <div class="request-details-grid">
-          <div class="request-detail-item">
-            <span class="request-detail-label">Entrada Registrada</span>
-            <span class="request-detail-value">${entryStr}</span>
-          </div>
-          <div class="request-detail-item">
-            <span class="request-detail-label">Salida ${req.status === 'approved' ? 'Oficial' : 'Solicitada'}</span>
-            <span class="request-detail-value highlight">${exitStr}</span>
-          </div>
-          <div class="request-detail-item">
-            <span class="request-detail-label">Duración Calculada</span>
-            <span class="request-detail-value">${durationStr}</span>
-          </div>
-        </div>
+          ${req.status === 'pending' ? `
+            <div class="request-actions">
+              <button class="btn-reject-req" data-id="${req.id}">Rechazar</button>
+              <button class="btn-modify-req" data-id="${req.id}">Modificar Hora</button>
+              <button class="btn-approve-req" data-id="${req.id}">✓ Aprobar Entrada</button>
+            </div>
+          ` : ''}
+        `;
+      } else {
+        const entryDate = new Date(req.entryTimestamp);
+        const exitDate = new Date(req.finalExitTimestamp || req.requestedExitTimestamp);
 
-        ${req.status === 'pending' ? `
-          <div class="request-actions">
-            <button class="btn-reject-req" data-id="${req.id}">Rechazar</button>
-            <button class="btn-modify-req" data-id="${req.id}">Modificar Hora</button>
-            <button class="btn-approve-req" data-id="${req.id}">✓ Aprobar Salida</button>
+        const entryStr = entryDate.toLocaleDateString('es-ES', {
+          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+        const exitStr = exitDate.toLocaleDateString('es-ES', {
+          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+
+        const totalMinutes = Math.max(0, Math.floor((exitDate.getTime() - entryDate.getTime()) / 60000));
+        const hours = Math.floor(totalMinutes / 60);
+        const mins = totalMinutes % 60;
+        const durationStr = `${hours}h ${mins > 0 ? mins + 'm' : ''}`;
+
+        card.innerHTML = `
+          <div class="request-card-header">
+            <div class="request-emp-info">
+              <div class="request-avatar" style="background: #E17055">📤</div>
+              <div>
+                <div class="request-emp-name">${req.employeeName || 'Empleado'}</div>
+                <div class="request-created-at">
+                  <span class="request-type-badge exit">Olvido Salida</span>
+                  Solicitado el ${createdStr} ${req.shiftDay === 'next_day' ? '• Turno de madrugada (+1 día)' : ''}
+                </div>
+              </div>
+            </div>
+            <span class="request-status-badge ${req.status}">${statusText}</span>
           </div>
-        ` : ''}
-      `;
+
+          <div class="request-details-grid">
+            <div class="request-detail-item">
+              <span class="request-detail-label">Entrada Registrada</span>
+              <span class="request-detail-value">${entryStr}</span>
+            </div>
+            <div class="request-detail-item">
+              <span class="request-detail-label">Salida ${req.status === 'approved' ? 'Oficial' : 'Solicitada'}</span>
+              <span class="request-detail-value highlight">${exitStr}</span>
+            </div>
+            <div class="request-detail-item">
+              <span class="request-detail-label">Duración Calculada</span>
+              <span class="request-detail-value">${durationStr}</span>
+            </div>
+          </div>
+
+          ${req.status === 'pending' ? `
+            <div class="request-actions">
+              <button class="btn-reject-req" data-id="${req.id}">Rechazar</button>
+              <button class="btn-modify-req" data-id="${req.id}">Modificar Hora</button>
+              <button class="btn-approve-req" data-id="${req.id}">✓ Aprobar Salida</button>
+            </div>
+          ` : ''}
+        `;
+      }
 
       if (req.status === 'pending') {
         const btnApprove = card.querySelector('.btn-approve-req');
@@ -1016,7 +1100,7 @@
         btnApprove.addEventListener('click', async () => {
           const res = await window.api.approveRequest({ requestId: req.id });
           if (res.success) {
-            showToast('✓ Salida confirmada y registrada en el sistema', 'success');
+            showToast(isLateEntry ? '✓ Entrada confirmada y registrada en el sistema' : '✓ Salida confirmada y registrada en el sistema', 'success');
             await updatePendingRequestsBadge();
             await loadAdminRequests();
           } else {
@@ -1029,7 +1113,10 @@
         });
 
         btnReject.addEventListener('click', async () => {
-          const confirmed = await showConfirm('Rechazar petición', '¿Seguro que deseas descartar esta petición de salida?');
+          const promptMsg = isLateEntry
+            ? '¿Seguro que deseas rechazar esta petición? El empleado quedará registrado con su hora de fichaje físico.'
+            : '¿Seguro que deseas descartar esta petición de salida?';
+          const confirmed = await showConfirm('Rechazar petición', promptMsg);
           if (confirmed) {
             const res = await window.api.rejectRequest({ requestId: req.id });
             if (res.success) {
@@ -1049,22 +1136,47 @@
 
   // === Modal: Modificar Petición (Admin) ===
   function openModifyRequestModal(request) {
+    currentModifyingRequest = request;
     currentModifyingRequestId = request.id;
     modifyReqError.classList.add('hidden');
 
     modifyReqEmployee.textContent = `Empleado: ${request.employeeName}`;
-    const entryDate = new Date(request.entryTimestamp);
-    modifyReqDetails.textContent = `Entrada registrada: ${entryDate.toLocaleDateString('es-ES')} a las ${entryDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
 
-    const reqExitDate = new Date(request.requestedExitTimestamp);
-    const yyyy = reqExitDate.getFullYear();
-    const mm = String(reqExitDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(reqExitDate.getDate()).padStart(2, '0');
-    modifyReqDate.value = `${yyyy}-${mm}-${dd}`;
+    if (request.type === 'late_entry') {
+      if (modifyReqTitle) modifyReqTitle.textContent = 'Modificar y Aprobar Entrada';
+      if (modifyReqDateLabel) modifyReqDateLabel.textContent = 'Fecha de Entrada';
+      if (modifyReqTimeLabel) modifyReqTimeLabel.textContent = 'Hora de Entrada Definitiva';
 
-    const hh = String(reqExitDate.getHours()).padStart(2, '0');
-    const min = String(reqExitDate.getMinutes()).padStart(2, '0');
-    modifyReqTime.value = `${hh}:${min}`;
+      const actualDate = new Date(request.actualClockInTimestamp || request.createdAt);
+      modifyReqDetails.textContent = `Turno: ${request.shiftName || ''} (${request.shiftStartTime || ''}). Fichó físicamente a las ${actualDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+
+      const reqEntryDate = new Date(request.requestedEntryTimestamp);
+      const yyyy = reqEntryDate.getFullYear();
+      const mm = String(reqEntryDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(reqEntryDate.getDate()).padStart(2, '0');
+      modifyReqDate.value = `${yyyy}-${mm}-${dd}`;
+
+      const hh = String(reqEntryDate.getHours()).padStart(2, '0');
+      const min = String(reqEntryDate.getMinutes()).padStart(2, '0');
+      modifyReqTime.value = `${hh}:${min}`;
+    } else {
+      if (modifyReqTitle) modifyReqTitle.textContent = 'Modificar y Aprobar Salida';
+      if (modifyReqDateLabel) modifyReqDateLabel.textContent = 'Fecha de Salida';
+      if (modifyReqTimeLabel) modifyReqTimeLabel.textContent = 'Hora de Salida Definitiva';
+
+      const entryDate = new Date(request.entryTimestamp);
+      modifyReqDetails.textContent = `Entrada registrada: ${entryDate.toLocaleDateString('es-ES')} a las ${entryDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+
+      const reqExitDate = new Date(request.requestedExitTimestamp);
+      const yyyy = reqExitDate.getFullYear();
+      const mm = String(reqExitDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(reqExitDate.getDate()).padStart(2, '0');
+      modifyReqDate.value = `${yyyy}-${mm}-${dd}`;
+
+      const hh = String(reqExitDate.getHours()).padStart(2, '0');
+      const min = String(reqExitDate.getMinutes()).padStart(2, '0');
+      modifyReqTime.value = `${hh}:${min}`;
+    }
 
     modalModifyRequest.classList.remove('hidden');
   }
@@ -1072,6 +1184,7 @@
   function closeModifyRequestModal() {
     modalModifyRequest.classList.add('hidden');
     currentModifyingRequestId = null;
+    currentModifyingRequest = null;
   }
 
   btnModifyReqClose.addEventListener('click', closeModifyRequestModal);
@@ -1084,18 +1197,20 @@
       return;
     }
 
+    const isLateEntry = currentModifyingRequest && currentModifyingRequest.type === 'late_entry';
     const [h, m] = modifyReqTime.value.split(':').map(Number);
     const targetDate = new Date(modifyReqDate.value);
     targetDate.setHours(h, m, 0, 0);
 
     const res = await window.api.approveRequest({
       requestId: currentModifyingRequestId,
-      customExitTimestamp: targetDate.toISOString()
+      customExitTimestamp: isLateEntry ? undefined : targetDate.toISOString(),
+      customEntryTimestamp: isLateEntry ? targetDate.toISOString() : undefined
     });
 
     if (res.success) {
       closeModifyRequestModal();
-      showToast('✓ Salida modificada y registrada correctamente', 'success');
+      showToast(isLateEntry ? '✓ Entrada modificada y aprobada correctamente' : '✓ Salida modificada y registrada correctamente', 'success');
       await updatePendingRequestsBadge();
       await loadAdminRequests();
     } else {
@@ -1104,6 +1219,262 @@
     }
   });
 
+  // === Modal: Entrada con Retraso (Empleado) ===
+  function openLateEntryModal(employee, lateEntryData) {
+    currentLateEntryData = lateEntryData;
+    lateEntryError.classList.add('hidden');
+
+    const now = new Date();
+    const currentShift = lateEntryData.currentShift;
+    const nextShift = lateEntryData.nextShift;
+
+    lateEntryShiftInfo.innerHTML = `Tu turno "<strong>${currentShift.name}</strong>" comenzaba a las <strong>${currentShift.startTime}</strong>.`;
+    lateEntryNowInfo.innerHTML = `Hora actual de fichaje: <strong>${now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</strong>.`;
+
+    const minTime = new Date(now.getTime() - 7 * 60 * 60 * 1000);
+    const minTimeStr = minTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+    let limitsText = `Puedes indicar una hora desde las ${minTimeStr} (hasta 7h antes)`;
+    if (nextShift) {
+      limitsText += ` o hasta media hora antes del ${nextShift.name} (${nextShift.startTime}).`;
+    } else {
+      limitsText += ` hasta la hora actual.`;
+    }
+    lateEntryLimitsHint.textContent = limitsText;
+
+    // Default to shift start time
+    lateEntryTime.value = currentShift.startTime;
+    modalLateEntry.classList.remove('hidden');
+  }
+
+  function closeLateEntryModal() {
+    modalLateEntry.classList.add('hidden');
+    currentLateEntryData = null;
+  }
+
+  btnLateEntryClose.addEventListener('click', closeLateEntryModal);
+  btnLateEntryCancel.addEventListener('click', closeLateEntryModal);
+
+  btnLateEntryNow.addEventListener('click', async () => {
+    if (!selectedEmployee) return;
+    closeLateEntryModal();
+
+    const record = await window.api.clockIn(selectedEmployee.id, { skipShiftCheck: true });
+    if (record.error) {
+      showToast(record.error, 'error');
+      return;
+    }
+
+    const time = new Date(record.timestamp).toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    clockinFeedback.className = 'clockin-feedback entry';
+    clockinFeedback.classList.remove('hidden');
+    feedbackText.textContent = `Entrada registrada a las ${time}`;
+
+    setTimeout(() => {
+      clockinFeedback.classList.add('hidden');
+    }, 3000);
+
+    await updateClockInStatus();
+    loadEmployees();
+  });
+
+  btnLateEntrySubmit.addEventListener('click', async () => {
+    if (!currentLateEntryData || !selectedEmployee) return;
+
+    if (!lateEntryTime.value) {
+      lateEntryError.textContent = 'Por favor, introduce la hora a la que entraste.';
+      lateEntryError.classList.remove('hidden');
+      return;
+    }
+
+    const now = new Date();
+    const [h, m] = lateEntryTime.value.split(':').map(Number);
+    let entryDate = new Date(now);
+    entryDate.setHours(h, m, 0, 0);
+
+    // If selected time is later than now by more than 1 minute:
+    // If it's within 7 hours if we assume yesterday (e.g. night shift clocking in past midnight)
+    if (entryDate.getTime() > now.getTime() + 60000) {
+      const yesterday = new Date(entryDate);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const diffYesterday = now.getTime() - yesterday.getTime();
+      if (diffYesterday > 0 && diffYesterday <= 7 * 60 * 60 * 1000) {
+        entryDate = yesterday;
+      } else {
+        lateEntryError.textContent = 'La hora de entrada no puede ser futura.';
+        lateEntryError.classList.remove('hidden');
+        return;
+      }
+    }
+
+    // Check 7 hours rule
+    const minAllowedTime = new Date(now.getTime() - 7 * 60 * 60 * 1000);
+    if (entryDate.getTime() < minAllowedTime.getTime()) {
+      lateEntryError.textContent = 'No puedes indicar una hora de más de 7 horas antes.';
+      lateEntryError.classList.remove('hidden');
+      return;
+    }
+
+    // Check next shift rule (half hour before next shift starts)
+    if (currentLateEntryData.nextShift) {
+      const [nh, nm] = currentLateEntryData.nextShift.startTime.split(':').map(Number);
+      let nextShiftDate = new Date(entryDate);
+      nextShiftDate.setHours(nh, nm, 0, 0);
+      const [sh, sm] = currentLateEntryData.currentShift.startTime.split(':').map(Number);
+      if (nh * 60 + nm <= sh * 60 + sm) {
+        nextShiftDate.setDate(nextShiftDate.getDate() + 1);
+      }
+      const halfHourBeforeNext = new Date(nextShiftDate.getTime() - 30 * 60 * 1000);
+      if (entryDate.getTime() > halfHourBeforeNext.getTime()) {
+        const hhNext = halfHourBeforeNext.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        lateEntryError.textContent = `La hora no puede superar las ${hhNext} (media hora antes de ${currentLateEntryData.nextShift.name}).`;
+        lateEntryError.classList.remove('hidden');
+        return;
+      }
+    }
+
+    btnLateEntrySubmit.disabled = true;
+    btnLateEntrySubmit.textContent = 'Enviando...';
+
+    const res = await window.api.submitEntryRequest({
+      employeeId: selectedEmployee.id,
+      requestedEntryTimestamp: entryDate.toISOString(),
+      shiftName: currentLateEntryData.currentShift.name,
+      shiftStartTime: currentLateEntryData.currentShift.startTime
+    });
+
+    btnLateEntrySubmit.disabled = false;
+    btnLateEntrySubmit.textContent = 'Enviar Petición con Hora Indicada';
+
+    if (res.error) {
+      lateEntryError.textContent = res.error;
+      lateEntryError.classList.remove('hidden');
+      return;
+    }
+
+    closeLateEntryModal();
+    const formattedTime = entryDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    showToast(`✓ Entrada solicitada a las ${formattedTime} (pendiente de aprobación)`, 'success');
+    await updatePendingRequestsBadge();
+    await updateClockInStatus();
+    await loadEmployees();
+  });
+
+  // === Admin: Shifts Management (Turnos) ===
+  async function loadAdminShifts() {
+    try {
+      const config = await window.api.getShifts();
+      if (shiftThresholdMinutes) {
+        shiftThresholdMinutes.value = config.lateEntryThresholdMinutes || 15;
+      }
+
+      adminShiftsList.innerHTML = '';
+      const shifts = config.shifts || [];
+
+      if (shifts.length === 0) {
+        adminShiftsList.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; padding: 12px 0;">No hay turnos configurados aún. Añade los turnos para que el sistema detecte entradas tardías.</p>';
+        return;
+      }
+
+      const sortedShifts = [...shifts].sort((a, b) => {
+        const [ah, am] = a.startTime.split(':').map(Number);
+        const [bh, bm] = b.startTime.split(':').map(Number);
+        return (ah * 60 + am) - (bh * 60 + bm);
+      });
+
+      sortedShifts.forEach(shift => {
+        const card = document.createElement('div');
+        card.className = 'shift-card';
+        card.innerHTML = `
+          <div class="shift-card-info">
+            <div class="shift-card-icon">⏰</div>
+            <div>
+              <div class="shift-card-name">${shift.name}</div>
+              <div class="shift-card-time">Hora de inicio: <strong>${shift.startTime}</strong></div>
+            </div>
+          </div>
+          <div class="shift-card-actions">
+            <button class="btn-delete-shift" data-id="${shift.id}">Eliminar</button>
+          </div>
+        `;
+
+        card.querySelector('.btn-delete-shift').addEventListener('click', async () => {
+          const confirmed = await showConfirm('Eliminar Turno', `¿Seguro que deseas eliminar el turno "${shift.name}"?`);
+          if (confirmed) {
+            const currentConfig = await window.api.getShifts();
+            const updatedShifts = (currentConfig.shifts || []).filter(s => s.id !== shift.id);
+            await window.api.saveShifts({
+              shifts: updatedShifts,
+              lateEntryThresholdMinutes: Number(shiftThresholdMinutes.value) || 15
+            });
+            showToast('Turno eliminado', 'info');
+            await loadAdminShifts();
+          }
+        });
+
+        adminShiftsList.appendChild(card);
+      });
+    } catch (e) {
+      console.error('Error loading shifts:', e);
+    }
+  }
+
+  if (btnSaveThreshold) {
+    btnSaveThreshold.addEventListener('click', async () => {
+      const threshold = parseInt(shiftThresholdMinutes.value, 10);
+      if (isNaN(threshold) || threshold < 1) {
+        showToast('El margen de tolerancia debe ser de al menos 1 minuto', 'error');
+        return;
+      }
+      const config = await window.api.getShifts();
+      await window.api.saveShifts({
+        shifts: config.shifts || [],
+        lateEntryThresholdMinutes: threshold
+      });
+      showToast('✓ Margen de tolerancia actualizado a ' + threshold + ' minutos', 'success');
+    });
+  }
+
+  if (btnAddShift) {
+    btnAddShift.addEventListener('click', async () => {
+      const name = shiftName.value.trim();
+      const time = shiftStartTime.value;
+
+      if (!name) {
+        showToast('Introduce el nombre del turno (ej: Turno Mañana)', 'error');
+        return;
+      }
+      if (!time) {
+        showToast('Selecciona la hora de comienzo del turno', 'error');
+        return;
+      }
+
+      const config = await window.api.getShifts();
+      const shifts = config.shifts || [];
+
+      const newShift = {
+        id: 'shift-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 4),
+        name,
+        startTime: time
+      };
+
+      shifts.push(newShift);
+      await window.api.saveShifts({
+        shifts,
+        lateEntryThresholdMinutes: Number(shiftThresholdMinutes.value) || 15
+      });
+
+      shiftName.value = '';
+      shiftStartTime.value = '';
+      showToast(`✓ Turno "${name}" añadido (${time})`, 'success');
+      await loadAdminShifts();
+    });
+  }
+
   // === Keyboard shortcuts ===
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -1111,6 +1482,8 @@
         closeModal();
       } else if (!modalForgottenExit.classList.contains('hidden')) {
         closeForgottenExitModal();
+      } else if (!modalLateEntry.classList.contains('hidden')) {
+        closeLateEntryModal();
       } else if (!modalModifyRequest.classList.contains('hidden')) {
         closeModifyRequestModal();
       } else if (currentView === 'clockin') {

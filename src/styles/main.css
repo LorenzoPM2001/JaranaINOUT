@@ -1653,3 +1653,115 @@ body {
   color: var(--text-muted);
   font-size: 14px;
 }
+
+/* ===== SHIFTS CONFIGURATION STYLES ===== */
+.tolerance-config-card,
+.add-shift-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  backdrop-filter: blur(8px);
+}
+
+.shifts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shift-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  border-left: 4px solid var(--accent-primary);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  transition: all var(--transition-normal);
+}
+
+.shift-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-glass-hover);
+  border-left-color: var(--accent-secondary);
+  transform: translateX(3px);
+}
+
+.shift-card-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.shift-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: rgba(108, 92, 231, 0.15);
+  color: #A29BFE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.shift-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.shift-card-time {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.shift-card-time strong {
+  color: #A5B4FC;
+}
+
+.btn-delete-shift {
+  padding: 6px 12px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-delete-shift:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #EF4444;
+}
+
+.request-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.request-type-badge.exit {
+  background: rgba(225, 112, 85, 0.15);
+  color: #FAB1A0;
+  border: 1px solid rgba(225, 112, 85, 0.3);
+}
+
+.request-type-badge.late_entry {
+  background: rgba(99, 102, 241, 0.15);
+  color: #A5B4FC;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
